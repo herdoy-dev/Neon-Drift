@@ -109,7 +109,7 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 
 Questions about these Terms:
 
-**support@neondrift.app**
+**contact@herdoydev.com**
 
 ---
 

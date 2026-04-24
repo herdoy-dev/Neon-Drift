@@ -8,7 +8,7 @@ This Privacy Policy explains how **Neon Drift** ("the App", "we", "us", "our") h
 
 Neon Drift is a free-to-play arcade game developed by an independent developer. The App is distributed through the Google Play Store.
 
-If you have questions, contact: **support@neondrift.app**
+If you have questions, contact: **contact@herdoydev.com**
 
 ## 2. Information we collect
 
@@ -112,7 +112,7 @@ We may update this Privacy Policy from time to time. Updates will be posted in t
 
 Questions about this Privacy Policy:
 
-**support@neondrift.app**
+**contact@herdoydev.com**
 
 ---
 
