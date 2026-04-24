@@ -1,8 +1,11 @@
 # Terms of Service
 
+**Effective date: April 24, 2026**
 **Last updated: April 24, 2026**
 
-These Terms of Service ("Terms") govern your use of the **Neon Drift** mobile game ("the App", "Service"). By downloading, installing, or using Neon Drift, you agree to be bound by these Terms. If you do not agree, do not use the App.
+These Terms of Service ("Terms") govern your use of the **Neon Drift** mobile game ("the App", "the Service"), developed and operated by **herdoydev** ("we", "us", "our", "the developer").
+
+By downloading, installing, or using Neon Drift, you agree to be bound by these Terms. If you do not agree, do not use the App.
 
 ## 1. Eligibility
 
@@ -89,7 +92,9 @@ We may update, modify, or discontinue all or part of the App at any time, with o
 
 ## 12. Governing law and disputes
 
-These Terms are governed by the laws of the jurisdiction in which the developer resides, without regard to its conflict of law principles. Any dispute arising from these Terms or the App shall be resolved in the courts of that jurisdiction, unless you are entitled by local consumer law to pursue the matter in your local courts.
+These Terms are governed by the laws applicable at the developer's principal place of residence, without regard to its conflict of law principles. Any dispute arising from these Terms or the App shall be resolved in the courts competent at that location, unless you are entitled by local consumer protection law to pursue the matter in your local courts.
+
+Nothing in these Terms limits your non-waivable statutory consumer rights under the laws of the European Union, United Kingdom, or any other applicable jurisdiction.
 
 ## 13. Changes to these Terms
 
