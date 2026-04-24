@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, GestureResponderEvent } from 'react-native';
 import { Canvas, Circle, Group, BlurMask } from '@shopify/react-native-skia';
+import { Ionicons } from '@expo/vector-icons';
 import { useGameStore } from '../gameStore';
+import { CoinIcon } from '../components/CoinIcon';
+import { colors } from '../theme';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -239,8 +242,18 @@ export function GameScreen({ onGameOver }: Props) {
       </Canvas>
 
       <View style={styles.hud} pointerEvents="none">
-        <Text style={styles.hudText}>SCORE {score}</Text>
-        <Text style={styles.hudText}>+{runCoins}</Text>
+        <View style={[styles.hudBadge, styles.hudBadgeCyan]}>
+          <Ionicons name="timer-outline" size={14} color={colors.cyan} />
+          <Text style={[styles.hudText, { color: colors.cyan, textShadowColor: colors.cyan }]}>
+            {score}s
+          </Text>
+        </View>
+        <View style={[styles.hudBadge, styles.hudBadgeGold]}>
+          <CoinIcon size={14} />
+          <Text style={[styles.hudText, { color: colors.gold, textShadowColor: colors.gold }]}>
+            +{runCoins}
+          </Text>
+        </View>
       </View>
 
       <View
@@ -257,7 +270,7 @@ export function GameScreen({ onGameOver }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a1a' },
+  container: { flex: 1, backgroundColor: colors.bg },
   hud: {
     position: 'absolute',
     top: 50,
@@ -265,14 +278,36 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+  },
+  hudBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(10, 10, 26, 0.65)',
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  hudBadgeCyan: {
+    borderColor: 'rgba(0, 240, 255, 0.5)',
+    shadowColor: colors.cyan,
+    shadowOpacity: 0.4,
+  },
+  hudBadgeGold: {
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+    shadowColor: colors.gold,
+    shadowOpacity: 0.4,
   },
   hudText: {
-    color: '#00f0ff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 1.5,
-    textShadowColor: '#00f0ff',
-    textShadowRadius: 12,
+    letterSpacing: 1.2,
+    textShadowRadius: 10,
+    textShadowOffset: { width: 0, height: 0 },
   },
 });
