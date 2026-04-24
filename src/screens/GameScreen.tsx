@@ -4,22 +4,36 @@ import { Canvas, Circle, Group, BlurMask } from '@shopify/react-native-skia';
 import { useGameStore } from '../gameStore';
 
 const { width: W, height: H } = Dimensions.get('window');
+
 const PLAYER_R = 14;
 const ENEMY_R = 16;
 const COIN_R = 10;
-const BASE_ENEMY_SPEED = 1.2;
-const PLAYER_SPEED = 5.5;
-const SPAWN_BASE_MS = 900;
-const SPEED_RAMP_PER_SEC = 0.035;
+
+const PLAYER_SPEED = 6.5;
+const BASE_ENEMY_SPEED = 0.9;
+
+const SPAWN_BASE_MS = 1400;
+const SPAWN_RAMP_PER_SEC = 12;
+const MIN_SPAWN_MS = 450;
+
+const SPEED_RAMP_PER_SEC = 0.020;
+
+const ENEMY_LIFETIME_MS = 18000;
+const COIN_LIFETIME_MS = 12000;
+const FADE_DURATION_MS = 2000;
+const MAX_ENEMIES = 12;
+const MIN_SPAWN_DISTANCE = 160;
+const START_GRACE_MS = 1200;
 
 type Entity = {
   id: number;
   x: number;
   y: number;
-  vx: number;
-  vy: number;
   r: number;
   kind: 'enemy' | 'coin';
+  spawnedAt: number;
+  opacity: number;
+  lethal: boolean;
 };
 
 type Props = {
@@ -31,7 +45,7 @@ let NEXT_ID = 1;
 export function GameScreen({ onGameOver }: Props) {
   const addCoins = useGameStore((s) => s.addCoins);
 
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
   const [score, setScore] = useState(0);
   const [runCoins, setRunCoins] = useState(0);
 
@@ -40,6 +54,7 @@ export function GameScreen({ onGameOver }: Props) {
   const entitiesRef = useRef<Entity[]>([]);
   const startRef = useRef(Date.now());
   const lastSpawnRef = useRef(Date.now());
+  const lastScoreRef = useRef(0);
   const deadRef = useRef(false);
   const runCoinsRef = useRef(0);
 
@@ -48,7 +63,7 @@ export function GameScreen({ onGameOver }: Props) {
     const loop = () => {
       if (deadRef.current) return;
       stepFrame();
-      setTick((t) => (t + 1) % 1e9);
+      setTick((t) => (t + 1) & 0xffff);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -57,10 +72,15 @@ export function GameScreen({ onGameOver }: Props) {
 
   const stepFrame = () => {
     const now = Date.now();
-    const elapsedSec = (now - startRef.current) / 1000;
-    setScore(Math.floor(elapsedSec));
+    const elapsed = now - startRef.current;
+    const elapsedSec = elapsed / 1000;
 
-    // Player follows touch
+    const nextScore = Math.floor(elapsedSec);
+    if (nextScore !== lastScoreRef.current) {
+      lastScoreRef.current = nextScore;
+      setScore(nextScore);
+    }
+
     const p = playerRef.current;
     const t = touchRef.current;
     if (t) {
@@ -75,28 +95,42 @@ export function GameScreen({ onGameOver }: Props) {
     p.x = Math.max(PLAYER_R, Math.min(W - PLAYER_R, p.x));
     p.y = Math.max(PLAYER_R + 40, Math.min(H - PLAYER_R - 40, p.y));
 
-    // Spawn logic
-    const spawnInterval = Math.max(250, SPAWN_BASE_MS - elapsedSec * 18);
+    const spawnInterval = Math.max(
+      MIN_SPAWN_MS,
+      SPAWN_BASE_MS - elapsedSec * SPAWN_RAMP_PER_SEC
+    );
     if (now - lastSpawnRef.current > spawnInterval) {
       lastSpawnRef.current = now;
-      spawnEnemy(elapsedSec);
-      if (Math.random() < 0.35) spawnCoin();
+      trySpawnEnemy(now, p);
+      if (Math.random() < 0.45) trySpawnCoin(now);
     }
 
-    // Update entities
     const speedMult = 1 + elapsedSec * SPEED_RAMP_PER_SEC;
+    const graceActive = elapsed < START_GRACE_MS;
     const next: Entity[] = [];
+
     for (const e of entitiesRef.current) {
+      const age = now - e.spawnedAt;
+
       if (e.kind === 'enemy') {
+        if (age > ENEMY_LIFETIME_MS) continue;
+        if (age > ENEMY_LIFETIME_MS - FADE_DURATION_MS) {
+          e.opacity = Math.max(0, (ENEMY_LIFETIME_MS - age) / FADE_DURATION_MS);
+          e.lethal = e.opacity > 0.55;
+        } else {
+          e.opacity = 1;
+          e.lethal = true;
+        }
         const dx = p.x - e.x;
         const dy = p.y - e.y;
         const d = Math.hypot(dx, dy) || 1;
         e.x += (dx / d) * BASE_ENEMY_SPEED * speedMult;
         e.y += (dy / d) * BASE_ENEMY_SPEED * speedMult;
       } else {
-        e.x += e.vx;
-        e.y += e.vy;
-        if (e.x < -30 || e.x > W + 30 || e.y < -30 || e.y > H + 30) continue;
+        if (age > COIN_LIFETIME_MS) continue;
+        if (age > COIN_LIFETIME_MS - FADE_DURATION_MS) {
+          e.opacity = Math.max(0, (COIN_LIFETIME_MS - age) / FADE_DURATION_MS);
+        }
       }
 
       const distToPlayer = Math.hypot(e.x - p.x, e.y - p.y);
@@ -105,10 +139,13 @@ export function GameScreen({ onGameOver }: Props) {
           runCoinsRef.current += 1;
           setRunCoins(runCoinsRef.current);
           continue;
-        } else {
+        } else if (e.lethal && !graceActive) {
           deadRef.current = true;
           addCoins(runCoinsRef.current);
-          setTimeout(() => onGameOver(runCoinsRef.current, Math.floor(elapsedSec)), 0);
+          setTimeout(
+            () => onGameOver(runCoinsRef.current, Math.floor(elapsedSec)),
+            0
+          );
           return;
         }
       }
@@ -117,24 +154,45 @@ export function GameScreen({ onGameOver }: Props) {
     entitiesRef.current = next;
   };
 
-  const spawnEnemy = (elapsedSec: number) => {
-    // Spawn from a random edge
-    const edge = Math.floor(Math.random() * 4);
-    let x = 0, y = 0;
-    if (edge === 0) { x = Math.random() * W; y = -ENEMY_R; }
-    else if (edge === 1) { x = W + ENEMY_R; y = Math.random() * H; }
-    else if (edge === 2) { x = Math.random() * W; y = H + ENEMY_R; }
-    else { x = -ENEMY_R; y = Math.random() * H; }
+  const trySpawnEnemy = (now: number, p: { x: number; y: number }) => {
+    let enemyCount = 0;
+    for (const e of entitiesRef.current) if (e.kind === 'enemy') enemyCount++;
+    if (enemyCount >= MAX_ENEMIES) return;
+
+    let x = 0;
+    let y = 0;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const edge = Math.floor(Math.random() * 4);
+      if (edge === 0) { x = Math.random() * W; y = -ENEMY_R; }
+      else if (edge === 1) { x = W + ENEMY_R; y = Math.random() * H; }
+      else if (edge === 2) { x = Math.random() * W; y = H + ENEMY_R; }
+      else { x = -ENEMY_R; y = Math.random() * H; }
+
+      if (Math.hypot(x - p.x, y - p.y) >= MIN_SPAWN_DISTANCE) break;
+    }
+
     entitiesRef.current.push({
-      id: NEXT_ID++, x, y, vx: 0, vy: 0, r: ENEMY_R, kind: 'enemy',
+      id: NEXT_ID++,
+      x, y,
+      r: ENEMY_R,
+      kind: 'enemy',
+      spawnedAt: now,
+      opacity: 1,
+      lethal: true,
     });
   };
 
-  const spawnCoin = () => {
+  const trySpawnCoin = (now: number) => {
     const x = 50 + Math.random() * (W - 100);
     const y = 100 + Math.random() * (H - 220);
     entitiesRef.current.push({
-      id: NEXT_ID++, x, y, vx: 0, vy: 0, r: COIN_R, kind: 'coin',
+      id: NEXT_ID++,
+      x, y,
+      r: COIN_R,
+      kind: 'coin',
+      spawnedAt: now,
+      opacity: 1,
+      lethal: false,
     });
   };
 
@@ -153,7 +211,6 @@ export function GameScreen({ onGameOver }: Props) {
   return (
     <View style={styles.container}>
       <Canvas style={StyleSheet.absoluteFill}>
-        {/* Player */}
         <Group>
           <Circle cx={p.x} cy={p.y} r={PLAYER_R + 8} color="#00f0ff" opacity={0.35}>
             <BlurMask blur={16} style="normal" />
@@ -162,17 +219,16 @@ export function GameScreen({ onGameOver }: Props) {
           <Circle cx={p.x} cy={p.y} r={PLAYER_R - 4} color="#ffffff" />
         </Group>
 
-        {/* Entities */}
         {entitiesRef.current.map((e) =>
           e.kind === 'enemy' ? (
-            <Group key={e.id}>
+            <Group key={e.id} opacity={e.opacity}>
               <Circle cx={e.x} cy={e.y} r={e.r + 6} color="#ff0066" opacity={0.4}>
                 <BlurMask blur={12} style="normal" />
               </Circle>
               <Circle cx={e.x} cy={e.y} r={e.r} color="#ff2277" />
             </Group>
           ) : (
-            <Group key={e.id}>
+            <Group key={e.id} opacity={e.opacity}>
               <Circle cx={e.x} cy={e.y} r={e.r + 5} color="#ffd700" opacity={0.45}>
                 <BlurMask blur={10} style="normal" />
               </Circle>
@@ -182,13 +238,11 @@ export function GameScreen({ onGameOver }: Props) {
         )}
       </Canvas>
 
-      {/* HUD */}
       <View style={styles.hud} pointerEvents="none">
         <Text style={styles.hudText}>SCORE {score}</Text>
         <Text style={styles.hudText}>+{runCoins}</Text>
       </View>
 
-      {/* Touch overlay */}
       <View
         style={StyleSheet.absoluteFill}
         onStartShouldSetResponder={() => true}
