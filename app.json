@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.neondrift.game"
+      "bundleIdentifier": "com.herdoydev.neondrift"
     },
     "android": {
-      "package": "com.neondrift.game",
+      "package": "com.herdoydev.neondrift",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a1a"
@@ -35,7 +35,8 @@
           "androidAppId": "ca-app-pub-7106488480723857~2794166405",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
