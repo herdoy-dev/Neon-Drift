@@ -1,0 +1,15 @@
+import { TestIds } from 'react-native-google-mobile-ads';
+
+const PROD_REWARDED = 'ca-app-pub-7106488480723857/6589941182';
+const PROD_INTERSTITIAL = 'ca-app-pub-7106488480723857/1553236926';
+const PROD_APP_OPEN = 'ca-app-pub-7106488480723857/7133386182';
+const PROD_BANNER = 'ca-app-pub-7106488480723857/9048583564';
+
+export const REWARDED_REVIVE = __DEV__ ? TestIds.REWARDED : PROD_REWARDED;
+export const REWARDED_DOUBLE = __DEV__ ? TestIds.REWARDED : PROD_REWARDED;
+export const REWARDED_REFILL = __DEV__ ? TestIds.REWARDED : PROD_REWARDED;
+export const REWARDED_DAILY = __DEV__ ? TestIds.REWARDED : PROD_REWARDED;
+
+export const INTERSTITIAL_GAMEOVER = __DEV__ ? TestIds.INTERSTITIAL : PROD_INTERSTITIAL;
+export const APP_OPEN_UNIT = __DEV__ ? TestIds.APP_OPEN : PROD_APP_OPEN;
+export const BANNER_HOME = __DEV__ ? TestIds.ADAPTIVE_BANNER : PROD_BANNER;
